@@ -1,0 +1,81 @@
+--Used unions to combine all the data tables and created a new table to clean and analyze. 
+
+
+CREATE TABLE IF NOT EXISTS bikesharing.year_data
+AS
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.April 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.May 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.June 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.July 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.August 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.September 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.October 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.November 2020`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.December 2020 2`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.January 2021`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.February 2021 2`
+UNION ALL 
+SELECT * 
+FROM `bike-sharing-case-study-319604.bikesharing.March 2021 2`
+
+
+--Removing duplicate ride_ids
+
+DELETE FROM `bike-sharing-case-study-319604.bikesharing.year_data` WHERE STRUCT(ride_id) in 
+(
+SELECT STRUCT(ride_id)  FROM
+(
+SELECT ride_id, ROW_NUMBER() over (PARTITION BY ride_id) as x 
+FROM `bike-sharing-case-study-319604.bikesharing.year_data`
+)y where y.x <> 1
+)
+
+
+
+
+--Checking to see if rows without station names have a station id so I can fill them in. 
+
+SELECT
+  start_station_id,
+  start_station_name,
+FROM 
+  `bike-sharing-case-study-319604.bikesharing.year_data`
+WHERE 
+  (start_station_name IS NULL AND start_station_id != 0) OR (end_station_name IS NULL AND end_station_id != 0)
+
+--The query returns no results so I can delete all of the rows with a no station name. 
+
+DELETE `bike-sharing-case-study-319604.bikesharing.year_data`
+WHERE (start_station_name IS NULL) OR (end_station_name IS NULL)
+
+
+
+--Removing all rides that have go on for zero minutes. 
+
+DELETE 
+  `bike-sharing-case-study-319604.bikesharing.year_data`
+WHERE
+  (DATE_DIFF(started_at, ended_at, MINUTE))/60 = 0
+  
+
