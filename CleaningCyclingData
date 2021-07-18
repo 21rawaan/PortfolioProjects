@@ -78,4 +78,24 @@ DELETE
 WHERE
   (DATE_DIFF(started_at, ended_at, MINUTE))/60 = 0
   
+  
+ 
+ --Making longitude and latitude values for a station name be the same. 
 
+UPDATE `bike-sharing-case-study-319604.bikesharing.year_data`
+SET 
+    start_lat = ROUND(start_lat,3),
+    start_lng = ROUND(start_lng,3),
+    end_lat = ROUND(end_lat,3),
+    end_lng = ROUND(end_lng,3)
+WHERE start_station_name IS NOT NULL
+  
+ 
+ 
+--Checking to see if there are any null values left. 
+
+SELECT col_name,
+       COUNT(*) AS nulls_count,
+FROM `bike-sharing-case-study-319604.bikesharing.year_data` table,
+     UNNEST(REGEXP_EXTRACT_ALL(TO_JSON_STRING(table), r'"(\w+)":null')) col_name
+GROUP BY col_name
