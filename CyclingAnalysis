@@ -1,0 +1,182 @@
+#UNDERSTANDING RELATIONSHIPS BETWEEN CASUALS AND LOCATION 
+
+--How many members, how many casuals, and what percent of riders were casual at each station?
+
+SELECT 
+    start_station_name,
+    COUNTIF(member_casual = 'member') AS number_of_members,
+    COUNTIF(member_casual = 'casual') AS number_of_casuals,
+    (COUNTIF(member_casual = 'casual')/COUNT(member_casual))*100 AS percent_of_casuals
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+GROUP BY 
+    start_station_name
+ORDER BY 
+    number_of_casuals DESC
+
+
+--How many stations have more casuals than subscribers?
+
+SELECT 
+    start_station_name,
+    COUNTIF(member_casual = 'casual')/COUNT(member_casual) AS percent_of_casuals
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+GROUP BY 
+    start_station_name
+HAVING
+    percent_of_casuals > 0.5
+ORDER BY
+    percent_of_casuals DESC
+
+SELECT 
+    COUNT(*)
+FROM (SELECT 
+    start_station_name,
+    COUNTIF(member_casual = 'casual')/COUNT(member_casual) AS percent_of_casuals
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+GROUP BY 
+    start_station_name
+HAVING
+    percent_of_casuals > 0.5
+ORDER BY
+    percent_of_casuals DESC)
+    
+  
+--What percent of stations have majority casuals?
+
+SELECT 
+(COUNT(*)/(SELECT COUNT(Distinct start_station_name) FROM `bike-sharing-case-study-319604.bikesharing.year_data`))*100
+FROM(SELECT 
+    start_station_name, 
+    COUNTIF(member_casual = 'casual')/COUNT(member_casual) AS percent_of_casuals
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+GROUP BY 
+    start_station_name
+HAVING
+    percent_of_casuals > 0.5
+ORDER BY
+    percent_of_casuals DESC)
+    
+    
+#UNDERSTANDING RELATIONSHIPS BETWEEN CASUALS AND TIME
+
+--Is there a time of day that has more casuals than members?
+SELECT 
+    CASE
+        WHEN EXTRACT (HOUR FROM started_at) > 6 AND EXTRACT (HOUR FROM started_at) < 12 THEN 'Morning'
+        WHEN EXTRACT (HOUR FROM started_at) >= 12 AND EXTRACT (HOUR FROM started_at) < 17 THEN 'Afternoon' 
+        WHEN EXTRACT (HOUR FROM started_at) >= 17 AND EXTRACT (HOUR FROM started_at) < 21 THEN 'Evening' 
+        ELSE 'Night'
+        END AS time_of_day,
+    member_casual,
+    COUNT(*) AS num_rides,
+    (COUNT(*)/(SELECT COUNT(*) FROM `bike-sharing-case-study-319604.bikesharing.year_data`))*100 AS percent_of_riders
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+GROUP BY
+     member_casual,time_of_day
+ORDER BY 
+    time_of_day
+
+--not enough of a relationship.
+
+
+
+
+--what part of the day do casuals ride the most?
+SELECT 
+    CASE
+        WHEN EXTRACT (HOUR FROM started_at) > 6 AND EXTRACT (HOUR FROM started_at) < 12 THEN 'Morning'
+        WHEN EXTRACT (HOUR FROM started_at) >= 12 AND EXTRACT (HOUR FROM started_at) < 17 THEN 'Afternoon' 
+        WHEN EXTRACT (HOUR FROM started_at) >= 17 AND EXTRACT (HOUR FROM started_at) < 21 THEN 'Evening' 
+        ELSE 'Night'
+        END AS time_of_day,
+    COUNT(*) AS num_casual_riders,
+    (COUNT(*)/(SELECT COUNTIF(member_casual = 'casual') FROM `bike-sharing-case-study-319604.bikesharing.year_data`))*100 AS percent_casuals
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+WHERE  
+     member_casual = 'casual'
+GROUP BY
+     time_of_day
+ORDER BY    
+    num_casual_riders
+-- 70% of casuals rides took place in afternoon and evening
+
+
+
+
+
+--Do the ride lengths tend to differ between casuals and members?
+
+SELECT 
+    avg(ride_length) AS average_ride_length,
+    member_casual,
+FROM(SELECT  
+    CASE
+        WHEN (DATE_DIFF(started_at, ended_at, MINUTE)) < 0 THEN ((DATE_DIFF(started_at, ended_at, MINUTE)))*-1
+        ELSE (DATE_DIFF(started_at, ended_at, MINUTE))
+        END as ride_length,
+    member_casual
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`)
+GROUP BY 
+    member_casual
+ --casual rides almost double member rides in terms of length... 
+
+
+
+
+
+--Are there more casuals than subscribers in the winter time compared to summer time?Fall?Spring? 
+SELECT 
+    CASE
+        WHEN EXTRACT (MONTH FROM started_at) >= 3 AND EXTRACT (MONTH FROM started_at) <= 5 THEN 'Spring'
+        WHEN EXTRACT (MONTH FROM started_at) >= 6 AND EXTRACT (MONTH FROM started_at) <= 8 THEN 'Summer' 
+        WHEN EXTRACT (MONTH FROM started_at) >= 9 AND EXTRACT (MONTH FROM started_at) <= 11 THEN 'Autumn' 
+        ELSE 'Winter'
+        END AS Season,
+    COUNT(*) AS num_casual_riders,
+    (COUNT(*)/(SELECT COUNTIF(member_casual = 'casual') FROM `bike-sharing-case-study-319604.bikesharing.year_data`))*100 AS percent_casuals
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+WHERE  
+     member_casual = 'casual'
+GROUP BY
+     Season
+ORDER BY    
+    num_casual_riders
+
+--More than half of the casual riders are in the summer. 
+
+
+
+
+--Day of week? Weekday vs Weekend? When do casuals ride and when do subscribers ride?
+
+SELECT 
+    CASE
+        WHEN EXTRACT (DAY FROM started_at) = 1 THEN 'Monday'
+        WHEN EXTRACT (DAY FROM started_at) = 2 THEN 'Tuesday'
+        WHEN EXTRACT (DAY FROM started_at) = 3 THEN 'Wednesday'
+        WHEN EXTRACT (DAY FROM started_at) = 4 THEN 'Thursday'
+        WHEN EXTRACT (DAY FROM started_at) = 5 THEN 'Friday'
+        WHEN EXTRACT (DAY FROM started_at) = 6 THEN 'Saturday'
+        WHEN EXTRACT (DAY FROM started_at) = 7 THEN 'Sunday'
+        END AS weekend_or_weekday,
+    COUNT(*) AS num_casual_riders,
+    (COUNT(*)/(SELECT COUNTIF(member_casual = 'casual') FROM `bike-sharing-case-study-319604.bikesharing.year_data` 
+    WHERE EXTRACT (DAY FROM started_at) >=1 AND  EXTRACT (DAY FROM started_at) <= 7))*100 AS percent_casuals
+FROM 
+    `bike-sharing-case-study-319604.bikesharing.year_data`
+WHERE  
+     member_casual = 'casual' AND EXTRACT (DAY FROM started_at) >=1 AND  EXTRACT (DAY FROM started_at) <= 7
+GROUP BY
+    weekend_or_weekday
+ORDER BY    
+    num_casual_riders DESC 
+
+--primarily casuals ride during the weekends. 
