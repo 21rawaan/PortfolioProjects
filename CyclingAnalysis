@@ -29,20 +29,6 @@ HAVING
 ORDER BY
     percent_of_casuals DESC
 
-SELECT 
-    COUNT(*)
-FROM (SELECT 
-    start_station_name,
-    COUNTIF(member_casual = 'casual')/COUNT(member_casual) AS percent_of_casuals
-FROM 
-    `bike-sharing-case-study-319604.bikesharing.year_data`
-GROUP BY 
-    start_station_name
-HAVING
-    percent_of_casuals > 0.5
-ORDER BY
-    percent_of_casuals DESC)
-    
   
 --What percent of stations have majority casuals?
 
