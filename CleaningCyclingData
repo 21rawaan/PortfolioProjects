@@ -92,10 +92,4 @@ WHERE start_station_name IS NOT NULL
   
  
  
---Checking to see if there are any null values left. 
 
-SELECT col_name,
-       COUNT(*) AS nulls_count,
-FROM `bike-sharing-case-study-319604.bikesharing.year_data` table,
-     UNNEST(REGEXP_EXTRACT_ALL(TO_JSON_STRING(table), r'"(\w+)":null')) col_name
-GROUP BY col_name
